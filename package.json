@@ -62,7 +62,7 @@
       "provider": "github",
       "owner": "boboloveic",
       "repo": "openskill-manager"
-    },
+    }],
     "directories": {
       "output": "dist"
     },
