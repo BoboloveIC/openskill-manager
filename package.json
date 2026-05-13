@@ -57,6 +57,12 @@
   "build": {
     "appId": "com.openskill.manager",
     "productName": "OpenSkill Manager",
+    "publish": [
+    {
+      "provider": "github",
+      "owner": "boboloveic",
+      "repo": "openskill-manager"
+    },
     "directories": {
       "output": "dist"
     },
