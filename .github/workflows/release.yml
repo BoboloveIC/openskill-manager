@@ -15,7 +15,85 @@ permissions:
   contents: write
 
 jobs:
+  screenshot:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          ref: main
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install Linux dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xvfb libarchive-tools rpm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build React & Electron
+        run: |
+          npx webpack --config webpack.react.config.js --mode production
+          npx webpack --config webpack.electron.config.js --mode production
+          cp src/electron/preload.js dist/electron/preload.js
+
+      - name: Take screenshot
+        run: |
+          # 启动虚拟显示器
+          Xvfb :99 -screen 0 1440x900x24 &
+          sleep 2
+          export DISPLAY=:99
+
+          # 运行 Electron 应用截图模式
+          npx electron . --screenshot=docs/screenshot.png &
+          ELECTRON_PID=$!
+
+          # 等待截图完成（最多 60s）
+          for i in $(seq 1 60); do
+            if [ -f docs/screenshot.png ]; then
+              echo "Screenshot captured after ${i}s"
+              break
+            fi
+            sleep 1
+          done
+
+          # 确保进程已结束
+          kill $ELECTRON_PID 2>/dev/null || true
+          wait $ELECTRON_PID 2>/dev/null || true
+
+          # 验证截图
+          if [ ! -f docs/screenshot.png ]; then
+            echo "⚠️ Screenshot not captured, creating placeholder"
+            mkdir -p docs
+            # 创建 1x1 占位图
+            printf '\x89PNG\r\n\x1a\n' > docs/screenshot.png
+          fi
+
+      - name: Update README with screenshot
+        run: |
+          node scripts/update-readme-screenshot.js
+
+      - name: Commit and push screenshot + README
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/screenshot.png README.md
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "docs: update app screenshot [skip ci]"
+            git push
+          fi
+
   release:
+    needs: screenshot
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:

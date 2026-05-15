@@ -7,6 +7,10 @@ let tray;
 let skillWatcher;
 let db;
 
+// 截图模式: --screenshot <output-path>
+const screenshotArg = process.argv.find(a => a.startsWith('--screenshot='));
+const screenshotPath = screenshotArg ? screenshotArg.split('=').slice(1).join('=') : null;
+
 // 预定义的 AI 工具平台
 const KNOWN_PLATFORMS = [
   'claude', 'codebuddy', 'codebuddycn', 'docex', 'copilot', 'cursor',
@@ -490,6 +494,52 @@ function createWindow() {
     mainWindow.show();
     // 窗口就绪后自动触发扫描
     runAutoScan();
+
+    // 截图模式: 等待渲染完成后截图并退出
+    if (screenshotPath) {
+      let scanDone = false;
+      // 监听扫描完成
+      ipcMain.handle('__screenshot-ping', async () => {
+        scanDone = true;
+        return 'ok';
+      });
+      // 轮询等待渲染进程就绪 + 扫描完成，最多 30s
+      const pollInterval = setInterval(async () => {
+        try {
+          await mainWindow.webContents.executeJavaScript(
+            `new Promise(r => setTimeout(() => r('ok'), 200))`
+          );
+          clearInterval(pollInterval);
+          // 扫描完成后等 2s 让 UI 渲染完毕
+          setTimeout(async () => {
+            try {
+              const image = await mainWindow.webContents.capturePage();
+              const dir = path.dirname(screenshotPath);
+              if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+              fs.writeFileSync(screenshotPath, image.toPNG());
+              console.log(`Screenshot saved to ${screenshotPath}`);
+            } catch (err) {
+              console.error('Screenshot failed:', err);
+            }
+            app.quit();
+          }, 2000);
+        } catch (e) {
+          // 页面还没加载好，继续等待
+        }
+      }, 1000);
+      // 超时保护: 30s 后强制截图
+      setTimeout(() => {
+        clearInterval(pollInterval);
+        if (!mainWindow.isDestroyed()) {
+          mainWindow.webContents.capturePage().then(image => {
+            const dir = path.dirname(screenshotPath);
+            if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+            fs.writeFileSync(screenshotPath, image.toPNG());
+            console.log(`Screenshot saved (timeout fallback) to ${screenshotPath}`);
+          }).catch(() => {}).finally(() => app.quit());
+        }
+      }, 30000);
+    }
   });
 
   mainWindow.on('closed', () => {
