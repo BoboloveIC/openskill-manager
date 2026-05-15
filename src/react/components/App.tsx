@@ -6,10 +6,13 @@ import PlatformDetail from './PlatformDetail';
 import AddDirectoryModal from './AddDirectoryModal';
 import MigrateModal from './MigrateModal';
 import ImportModal from './ImportModal';
+import Marketplace from './Marketplace';
 import { LanguageSelector } from './LanguageSelector';
+import { ThemeSelector } from './ThemeSelector';
 import { useLanguage } from '../i18n';
 import { classifySkill } from './CategoryFilter';
 import '../styles/App.css';
+import '../styles/themes.css';
 
 // 工具函数：去掉平台名称前的 "."（如 .claude → claude）
 export function stripDot(name: string): string {
@@ -86,7 +89,7 @@ const App: React.FC = () => {
   const [selectedSkill, setSelectedSkill] = useState<Skill | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeTab, setActiveTab] = useState<'skill' | 'plugin' | 'extension'>('skill'); // 类型切换
+  const [activeTab, setActiveTab] = useState<'skill' | 'plugin' | 'extension' | 'marketplace'>('skill'); // 类型切换
   const [scanning, setScanning] = useState(true); // 初始为 true，等待自动扫描
   const [showAddModal, setShowAddModal] = useState(false);
   const [showMigrateModal, setShowMigrateModal] = useState(false);
@@ -567,9 +570,14 @@ const App: React.FC = () => {
                 className={`type-tab ${activeTab === 'extension' ? 'active' : ''}`}
                 onClick={() => { setActiveTab('extension'); setSelectedSkill(null); setSelectedCategory('all'); }}
               >🧩 {t('tabExtensions')} <span className="tab-count">{typeStats.extension}</span></button>
+              <button
+                className={`type-tab ${activeTab === 'marketplace' ? 'active' : ''}`}
+                onClick={() => { setActiveTab('marketplace'); setSelectedSkill(null); setSelectedCategory('all'); }}
+              >🌐 {t('tabMarketplace')} <span className="tab-count">{t('marketplaceNew')}</span></button>
             </div>
           </div>
           <div className="header-right">
+            <ThemeSelector />
             <LanguageSelector />
             <input
               type="text"

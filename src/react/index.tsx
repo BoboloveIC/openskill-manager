@@ -2,6 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './components/App';
 import { LanguageProvider } from './i18n';
+import { ThemeProvider } from './context/ThemeContext';
 
 // React 错误边界：捕获渲染错误，防止空白屏
 class ErrorBoundary extends React.Component<
@@ -59,9 +60,11 @@ const root = ReactDOM.createRoot(
 root.render(
   <React.StrictMode>
     <ErrorBoundary>
-      <LanguageProvider>
-        <App />
-      </LanguageProvider>
+      <ThemeProvider>
+        <LanguageProvider>
+          <App />
+        </LanguageProvider>
+      </ThemeProvider>
     </ErrorBoundary>
   </React.StrictMode>
 );

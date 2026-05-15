@@ -1,0 +1,546 @@
+/* ============================================================
+   OpenSkill Manager - 主题样式
+   ============================================================ */
+
+/* ===== 深色主题（默认） ===== */
+:root,
+[data-theme="dark"] {
+  --primary-color: #667eea;
+  --primary-dark: #5a6fd6;
+  --secondary-color: #764ba2;
+  --success-color: #4caf50;
+  --danger-color: #f44336;
+  --warning-color: #ff9800;
+  --accent-color: var(--primary-color);
+
+  /* 背景色 */
+  --bg-base: #1a1a2e;
+  --bg-dark: #1a1a2e;
+  --bg-medium: #16213e;
+  --bg-light: #0f3460;
+  --bg-secondary: var(--bg-medium);
+  --bg-hover: #2a3a4a;
+
+  /* 文字色 */
+  --text-primary: #ffffff;
+  --text-secondary: #a0aec0;
+  --text-muted: #718096;
+
+  /* 边框和卡片 */
+  --border-color: #2d3748;
+  --card-bg: #1e2a3a;
+  --hover-bg: #2a3a4a;
+
+  /* 渐变 */
+  --gradient-primary: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+}
+
+/* ===== 浅色主题 ===== */
+[data-theme="light"] {
+  --primary-color: #667eea;
+  --primary-dark: #5a6fd6;
+  --secondary-color: #764ba2;
+  --success-color: #4caf50;
+  --danger-color: #f44336;
+  --warning-color: #ff9800;
+  --accent-color: var(--primary-color);
+
+  /* 背景色 - 浅色主题 */
+  --bg-base: #f0f2f5;
+  --bg-dark: #f0f2f5;
+  --bg-medium: #ffffff;
+  --bg-light: #e2e8f0;
+  --bg-secondary: #ffffff;
+  --bg-hover: #e8edf5;
+
+  /* 文字色 - 浅色主题 */
+  --text-primary: #1a202c;
+  --text-secondary: #4a5568;
+  --text-muted: #a0aec0;
+
+  /* 边框和卡片 - 浅色主题 */
+  --border-color: #e2e8f0;
+  --card-bg: #ffffff;
+  --hover-bg: #f7fafc;
+
+  /* 渐变 */
+  --gradient-primary: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+}
+
+/* 应用基础样式 */
+body {
+  background: var(--bg-base);
+  color: var(--text-primary);
+}
+
+/* 侧边栏 - 浅色主题适配 */
+[data-theme="light"] .sidebar {
+  background: var(--bg-medium);
+  border-color: var(--border-color);
+}
+
+[data-theme="light"] .sidebar-header {
+  border-bottom-color: var(--border-color);
+}
+
+[data-theme="light"] .sidebar-header h2 {
+  color: var(--text-primary);
+}
+
+[data-theme="light"] .sidebar-footer {
+  border-top-color: var(--border-color);
+  color: var(--text-muted);
+}
+
+/* 平台项目 - 浅色主题 */
+[data-theme="light"] .platform-item {
+  color: var(--text-primary);
+}
+
+[data-theme="light"] .platform-item:hover {
+  background: var(--hover-bg);
+}
+
+[data-theme="light"] .platform-item.active {
+  background: var(--gradient-primary);
+  color: white;
+}
+
+[data-theme="light"] .platform-count {
+  background: rgba(0, 0, 0, 0.06);
+  color: var(--text-secondary);
+}
+
+[data-theme="light"] .platform-item.active .platform-count {
+  background: rgba(255, 255, 255, 0.25);
+  color: white;
+}
+
+/* 主内容区 - 浅色主题 */
+[data-theme="light"] .main-content {
+  background: var(--bg-dark);
+}
+
+/* 头部 - 浅色主题 */
+[data-theme="light"] .app-header {
+  background: var(--bg-medium);
+  border-bottom-color: var(--border-color);
+}
+
+[data-theme="light"] .header-left h1 {
+  background: var(--gradient-primary);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+[data-theme="light"] .skill-count {
+  background: var(--bg-light);
+  color: var(--text-secondary);
+}
+
+/* 搜索框 - 浅色主题 */
+[data-theme="light"] .search-input {
+  background: var(--bg-base);
+  border-color: var(--border-color);
+  color: var(--text-primary);
+}
+
+[data-theme="light"] .search-input:focus {
+  border-color: var(--primary-color);
+  background: var(--bg-medium);
+}
+
+[data-theme="light"] .search-input::placeholder {
+  color: var(--text-muted);
+}
+
+/* 技能网格卡片 - 浅色主题 */
+[data-theme="light"] .skill-card {
+  background: var(--card-bg);
+  border-color: var(--border-color);
+}
+
+[data-theme="light"] .skill-card:hover {
+  border-color: var(--primary-color);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="light"] .skill-card.selected {
+  border-color: var(--primary-color);
+  background: rgba(102, 126, 234, 0.04);
+}
+
+[data-theme="light"] .skill-name {
+  color: var(--text-primary);
+}
+
+[data-theme="light"] .skill-description {
+  color: var(--text-secondary);
+}
+
+[data-theme="light"] .skill-version {
+  color: var(--text-muted);
+}
+
+[data-theme="light"] .skill-tag {
+  background: var(--bg-light);
+  color: var(--text-secondary);
+}
+
+/* 详情面板 - 浅色主题 */
+[data-theme="light"] .detail-section {
+  background: var(--card-bg);
+  border-color: var(--border-color);
+}
+
+[data-theme="light"] .skill-detail-header {
+  border-bottom-color: var(--border-color);
+}
+
+[data-theme="light"] .header-text h2 {
+  color: var(--text-primary);
+}
+
+[data-theme="light"] .info-row label {
+  color: var(--text-muted);
+}
+
+[data-theme="light"] .info-row span,
+[data-theme="light"] .info-row code {
+  color: var(--text-primary);
+}
+
+[data-theme="light"] .path-info {
+  background: var(--bg-base);
+}
+
+[data-theme="light"] .description {
+  color: var(--text-secondary);
+}
+
+[data-theme="light"] .tag {
+  background: var(--bg-light);
+  color: var(--text-primary);
+}
+
+[data-theme="light"] .timestamps {
+  border-top-color: var(--border-color);
+}
+
+[data-theme="light"] .skill-detail-actions {
+  border-top-color: var(--border-color);
+}
+
+/* 平台详情 - 浅色主题 */
+[data-theme="light"] .platform-detail-header {
+  border-bottom-color: var(--border-color);
+}
+
+[data-theme="light"] .stat-card {
+  background: var(--bg-base);
+}
+
+[data-theme="light"] .stat-label {
+  color: var(--text-muted);
+}
+
+[data-theme="light"] .path-item {
+  background: var(--bg-base);
+}
+
+[data-theme="light"] .path-item label {
+  color: var(--text-muted);
+}
+
+[data-theme="light"] .config-row {
+  border-bottom-color: var(--border-color);
+}
+
+[data-theme="light"] .config-row label {
+  color: var(--text-muted);
+}
+
+[data-theme="light"] .platform-detail-actions {
+  border-top-color: var(--border-color);
+}
+
+/* 扫描视图 - 浅色主题 */
+[data-theme="light"] .scan-view {
+  background: var(--bg-base);
+}
+
+[data-theme="light"] .scan-header h1 {
+  background: var(--gradient-primary);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+[data-theme="light"] .scan-subtitle {
+  color: var(--text-secondary);
+}
+
+/* 扫描进度区域 - 浅色主题 */
+[data-theme="light"] .scan-progress-section {
+  background: var(--card-bg);
+  border-color: var(--border-color);
+}
+
+[data-theme="light"] .phase-label {
+  color: var(--text-muted);
+}
+
+[data-theme="light"] .phase-value {
+  color: var(--primary-color);
+}
+
+[data-theme="light"] .progress-bar-container {
+  background: var(--bg-base);
+}
+
+[data-theme="light"] .progress-text {
+  color: var(--text-primary);
+}
+
+[data-theme="light"] .scan-current {
+  background: var(--bg-base);
+}
+
+[data-theme="light"] .current-text {
+  color: var(--text-primary);
+}
+
+/* 扫描日志 - 浅色主题 */
+[data-theme="light"] .scan-log-container {
+  background: var(--card-bg);
+  border-color: var(--border-color);
+}
+
+[data-theme="light"] .scan-log-header {
+  border-bottom-color: var(--border-color);
+}
+
+[data-theme="light"] .log-placeholder {
+  color: var(--text-muted);
+}
+
+[data-theme="light"] .log-entry:hover {
+  background: var(--hover-bg);
+}
+
+[data-theme="light"] .log-time {
+  color: var(--text-muted);
+}
+
+/* 扫描结果视图 - 浅色主题 */
+[data-theme="light"] .scan-result-header h1 {
+  background: var(--gradient-primary);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+[data-theme="light"] .scan-result-card {
+  background: var(--card-bg);
+  border-color: var(--border-color);
+}
+
+[data-theme="light"] .stat-label {
+  color: var(--text-secondary);
+}
+
+[data-theme="light"] .result-divider {
+  color: var(--border-color);
+}
+
+[data-theme="light"] .preview-platforms,
+[data-theme="light"] .preview-skills {
+  background: var(--bg-base);
+}
+
+[data-theme="light"] .preview-platform-item,
+[data-theme="light"] .preview-skill-item {
+  background: var(--card-bg);
+}
+
+[data-theme="light"] .preview-name,
+[data-theme="light"] .preview-skill-name {
+  color: var(--text-primary);
+}
+
+[data-theme="light"] .preview-count,
+[data-theme="light"] .preview-skill-platform {
+  background: var(--bg-light);
+  color: var(--text-muted);
+}
+
+[data-theme="light"] .preview-more {
+  color: var(--text-muted);
+}
+
+/* 弹窗 - 浅色主题 */
+[data-theme="light"] .modal-overlay {
+  background: rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="light"] .modal {
+  background: var(--bg-medium);
+}
+
+[data-theme="light"] .modal-header {
+  border-bottom-color: var(--border-color);
+}
+
+[data-theme="light"] .modal-header h2 {
+  color: var(--text-primary);
+}
+
+[data-theme="light"] .close-btn {
+  color: var(--text-muted);
+}
+
+[data-theme="light"] .close-btn:hover {
+  background: var(--hover-bg);
+  color: var(--text-primary);
+}
+
+[data-theme="light"] .modal-description {
+  color: var(--text-secondary);
+}
+
+[data-theme="light"] .form-group label {
+  color: var(--text-muted);
+}
+
+[data-theme="light"] .form-group input {
+  background: var(--bg-base);
+  border-color: var(--border-color);
+  color: var(--text-primary);
+}
+
+[data-theme="light"] .form-group input:focus {
+  border-color: var(--primary-color);
+}
+
+[data-theme="light"] .modal-footer {
+  border-top-color: var(--border-color);
+}
+
+[data-theme="light"] .migrate-info {
+  background: var(--bg-base);
+}
+
+[data-theme="light"] .migrate-info p {
+  color: var(--text-primary);
+}
+
+[data-theme="light"] .no-targets {
+  color: var(--text-muted);
+}
+
+[data-theme="light"] .target-item {
+  background: var(--bg-base);
+  border-color: var(--border-color);
+}
+
+[data-theme="light"] .target-item:hover {
+  border-color: var(--primary-color);
+  background: var(--hover-bg);
+}
+
+[data-theme="light"] .target-name {
+  color: var(--text-primary);
+}
+
+[data-theme="light"] .target-path {
+  color: var(--text-muted);
+}
+
+/* 按钮 - 浅色主题 */
+[data-theme="light"] .action-btn.secondary {
+  background: var(--bg-light);
+  color: var(--text-primary);
+}
+
+[data-theme="light"] .action-btn.secondary:hover {
+  background: var(--hover-bg);
+}
+
+[data-theme="light"] .action-btn.danger {
+  background: var(--danger-color);
+  color: white;
+}
+
+[data-theme="light"] .action-btn.small.danger {
+  background: rgba(244, 67, 54, 0.1);
+}
+
+[data-theme="light"] .scan-btn:hover:not(:disabled) {
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+}
+
+/* 加载动画 - 浅色主题 */
+[data-theme="light"] .loading-state {
+  color: var(--text-secondary);
+}
+
+[data-theme="light"] .loading-spinner {
+  border-color: var(--border-color);
+  border-top-color: var(--primary-color);
+}
+
+[data-theme="light"] .count {
+  background: var(--bg-light);
+  color: var(--text-secondary);
+}
+
+/* 多选工具栏 - 浅色主题 */
+[data-theme="light"] .multi-select-toolbar {
+  border-bottom-color: var(--border-color);
+}
+
+[data-theme="light"] .selected-count {
+  background: rgba(102, 126, 234, 0.08);
+  color: var(--primary-color);
+}
+
+/* 复选框 - 浅色主题 */
+[data-theme="light"] .skill-checkbox {
+  background: var(--bg-base);
+  border-color: var(--border-color);
+}
+
+[data-theme="light"] .skill-checkbox.checked {
+  background: var(--primary-color);
+  border-color: var(--primary-color);
+}
+
+/* 列表空状态 - 浅色主题 */
+[data-theme="light"] .skill-grid-empty {
+  color: var(--text-secondary);
+}
+
+/* 扫描按钮 - 浅色主题 */
+[data-theme="light"] .scan-btn:disabled {
+  opacity: 0.6;
+}
+
+/* 语言选择器下拉 - 浅色主题 */
+[data-theme="light"] .language-btn {
+  background: var(--bg-secondary);
+  border-color: var(--border-color);
+  color: var(--text-primary);
+}
+
+[data-theme="light"] select {
+  background-color: var(--bg-base);
+  border-color: var(--border-color);
+  color: var(--text-primary);
+}
+
+[data-theme="light"] select:focus {
+  border-color: var(--primary-color);
+}
+
+[data-theme="light"] select option {
+  background: var(--bg-medium);
+  color: var(--text-primary);
+}
