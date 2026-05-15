@@ -27,6 +27,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
   importSkillsFromFile: (filePath, targetPlatform) => ipcRenderer.invoke('import-skills-from-file', filePath, targetPlatform),
   selectImportFile: () => ipcRenderer.invoke('select-import-file'),
 
+  // 技能广场
+  getMarketplaceSources: () => ipcRenderer.invoke('get-marketplace-sources'),
+  getMarketplaceSkills: () => ipcRenderer.invoke('get-marketplace-skills'),
+  installMarketplaceSkill: (skill, targetPlatform) => ipcRenderer.invoke('install-marketplace-skill', skill, targetPlatform),
+  searchMarketplace: (query, sourceId) => ipcRenderer.invoke('search-marketplace', query, sourceId),
+
   // 进度事件
   onScanProgress: (callback) => {
     ipcRenderer.on('scan-progress', (event, data) => callback(data));

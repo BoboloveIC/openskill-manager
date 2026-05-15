@@ -1,6 +1,8 @@
 const { app, BrowserWindow, ipcMain, Menu, Tray, nativeImage, dialog, shell } = require('electron');
 const path = require('path');
 const fs = require('fs-extra');
+const https = require('https');
+const http = require('http');
 
 let mainWindow;
 let tray;
@@ -20,6 +22,372 @@ const KNOWN_PLATFORMS = [
   'zen', 'zencoder', 'aichat', 'continue', 'llama', 'llm', 'ollama',
   'perplexity', 'chata', 'chatgpt', 'gemini', 'cline'
 ];
+
+// ============================================================
+// 技能广场数据源配置
+// ============================================================
+const SKILL_SOURCES = [
+  {
+    id: 'clawhub',
+    name: 'ClawHub',
+    url: 'https://clawhub.com',
+    apiUrl: 'https://clawhub.com/api/v1/skills?page=1&limit=50',
+    searchUrl: 'https://clawhub.com/api/search?q=',
+    description: 'Fast skill registry for agents with vector search',
+    category: 'registry',
+    color: '#10B981',
+    defaultTab: 'skills'
+  },
+  {
+    id: 'skillhub',
+    name: 'SkillHub',
+    url: 'https://skillhub.dev',
+    apiUrl: 'https://skillhub.dev/api/skills',
+    searchUrl: 'https://skillhub.dev/api/search?q=',
+    description: 'Community skill registry for OpenClaw agents',
+    category: 'community',
+    color: '#6366F1',
+    defaultTab: 'skills'
+  },
+  {
+    id: 'github',
+    name: 'GitHub Topics',
+    url: 'https://github.com/topics/openclaw-skill',
+    apiUrl: null,
+    searchUrl: 'https://api.github.com/search/repositories?q=openclaw+skill+language:json&sort=stars&per_page=20',
+    description: 'Open-source skills tagged on GitHub',
+    category: 'community',
+    color: '#24292F',
+    defaultTab: 'repos'
+  },
+  {
+    id: 'npm_skills',
+    name: 'npm Registry',
+    url: 'https://www.npmjs.com/search?q=openclaw+skill',
+    apiUrl: null,
+    searchUrl: 'https://registry.npmjs.org/-/v1/search?text=openclaw+skill&size=20',
+    description: 'npm packages tagged as openclaw skill',
+    category: 'registry',
+    color: '#CB3837',
+    defaultTab: 'packages'
+  },
+  {
+    id: 'awesome_openclaw',
+    name: 'Awesome OpenClaw',
+    url: 'https://github.com/awesome-openclaw/awesome-openclaw',
+    apiUrl: 'https://raw.githubusercontent.com/awesome-openclaw/awesome-openclaw/main/skills.json',
+    searchUrl: null,
+    description: 'Curated list of awesome OpenClaw skills',
+    category: 'curated',
+    color: '#FF6B6B',
+    defaultTab: 'skills'
+  },
+  {
+    id: 'openclaw_marketplace',
+    name: 'OpenClaw Marketplace',
+    url: 'https://openclaw.ai/marketplace',
+    apiUrl: null,
+    searchUrl: null,
+    description: 'Official OpenClaw skill marketplace',
+    category: 'official',
+    color: '#3B82F6',
+    defaultTab: 'skills'
+  },
+  {
+    id: 'mcp_registry',
+    name: 'MCP Registry',
+    url: 'https://modelcontextprotocol.io/registry',
+    apiUrl: null,
+    searchUrl: 'https://raw.githubusercontent.com/modelcontextprotocol/registry/main/registry.json',
+    description: 'Model Context Protocol skill registry',
+    category: 'protocol',
+    color: '#8B5CF6',
+    defaultTab: 'skills'
+  },
+  {
+    id: 'agent_skills',
+    name: 'Agent Skills Hub',
+    url: 'https://github.com/agent-skills/agent-skills',
+    apiUrl: null,
+    searchUrl: 'https://api.github.com/repos/agent-skills/agent-skills/contents/skills.json',
+    description: 'Community-driven agent skill collection',
+    category: 'community',
+    color: '#F59E0B',
+    defaultTab: 'skills'
+  },
+  {
+    id: 'claw_marketplace',
+    name: 'Claw Marketplace',
+    url: 'https://clawmarket.dev',
+    apiUrl: null,
+    searchUrl: null,
+    description: 'Cross-platform AI agent skill marketplace',
+    category: 'registry',
+    color: '#EC4899',
+    defaultTab: 'skills'
+  },
+  {
+    id: 'skill_central',
+    name: 'Skill Central',
+    url: 'https://skillcentral.dev',
+    apiUrl: null,
+    searchUrl: null,
+    description: 'Central repository for AI agent skills',
+    category: 'registry',
+    color: '#14B8A6',
+    defaultTab: 'skills'
+  },
+  {
+    id: 'openskill_hub',
+    name: 'OpenSkill Hub',
+    url: 'https://openskillhub.io',
+    apiUrl: null,
+    searchUrl: null,
+    description: 'Open platform for AI tool skill management',
+    category: 'registry',
+    color: '#06B6D4',
+    defaultTab: 'skills'
+  },
+  {
+    id: 'agentverse',
+    name: 'AgentVerse',
+    url: 'https://agentverse.ai',
+    apiUrl: null,
+    searchUrl: null,
+    description: 'Multi-agent skill marketplace and collaboration',
+    category: 'platform',
+    color: '#8B5CF6',
+    defaultTab: 'skills'
+  }
+];
+
+// HTTP/HTTPS 请求辅助函数
+function fetchUrl(url, timeout = 10000) {
+  return new Promise((resolve, reject) => {
+    const protocol = url.startsWith('https') ? https : http;
+    const req = protocol.get(url, { headers: { 'User-Agent': 'OpenSkillManager/1.0' } }, (res) => {
+      if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
+        return fetchUrl(res.headers.location, timeout).then(resolve).catch(reject);
+      }
+      let data = '';
+      res.on('data', chunk => data += chunk);
+      res.on('end', () => resolve(data));
+    });
+    req.on('error', reject);
+    req.on('timeout', () => { req.destroy(); reject(new Error('Request timeout')); });
+    req.setTimeout(timeout);
+  });
+}
+
+// 解析 ClawHub API 数据
+function parseClawHubSkills(raw) {
+  try {
+    const data = JSON.parse(raw);
+    const items = data.items || data.results || [];
+    return {
+      skills: items.map(item => ({
+        id: `clawhub:${item.slug}`,
+        name: item.displayName || item.slug,
+        description: item.summary || '',
+        version: item.latestVersion?.version || item.tags?.latest || '1.0.0',
+        author: (item.author && item.author.name) || 'ClawHub Community',
+        source: 'ClawHub',
+        sourceUrl: `https://clawhub.com/skills/${item.slug}`,
+        downloadUrl: `https://clawhub.com/api/v1/skills/${item.slug}/download`,
+        category: item.category || inferCategory(null, item.summary),
+        tags: item.tags ? Object.keys(item.tags).filter(k => k !== 'latest') : [],
+        platforms: item.platforms || ['openclaw', 'qclaw'],
+        installed: false,
+        stats: item.stats || {}
+      })),
+      nextCursor: data.nextCursor || null
+    };
+  } catch { return { skills: [], nextCursor: null }; }
+}
+
+// 解析 GitHub search 结果
+function parseGitHubSkills(raw) {
+  try {
+    const data = JSON.parse(raw);
+    const items = data.items || [];
+    return {
+      skills: items.map(item => ({
+        id: `github:${item.full_name}`,
+        name: item.name,
+        description: item.description || '',
+        version: '1.0.0',
+        author: item.owner.login,
+        source: 'GitHub',
+        sourceUrl: item.html_url,
+        downloadUrl: `https://github.com/${item.full_name}/archive/refs/heads/main.zip`,
+        category: inferCategory(null, item.description),
+        tags: item.topics?.slice(0, 5) || [],
+        platforms: ['openclaw', 'qclaw'],
+        installed: false,
+        stats: { stars: item.stargazers_count }
+      })),
+      nextCursor: null
+    };
+  } catch { return { skills: [], nextCursor: null }; }
+}
+
+// 推断分类
+function inferCategory(tags, description) {
+  const text = ((tags || []).join(' ') + ' ' + (description || '')).toLowerCase();
+  if (text.includes('search') || text.includes('web') || text.includes('google')) return 'search';
+  if (text.includes('code') || text.includes('git') || text.includes('github')) return 'devops';
+  if (text.includes('news') || text.includes('rss') || text.includes('media')) return 'media';
+  if (text.includes('code') || text.includes('mcp') || text.includes('api')) return 'code';
+  if (text.includes('file') || text.includes('storage') || text.includes('drive')) return 'storage';
+  if (text.includes('chat') || text.includes('message')) return 'communication';
+  return 'utility';
+}
+
+// 从多个数据源收集技能
+async function fetchMarketplaceSkills() {
+  const results = [];
+
+  // ClawHub - 主要来源 (支持 cursor 分页)
+  try {
+    let cursor = null;
+    let pagesFetched = 0;
+    do {
+      let url = 'https://clawhub.com/api/v1/skills?page=1&limit=50';
+      if (cursor) url += '&cursor=' + encodeURIComponent(cursor);
+      const raw = await fetchUrl(url);
+      const { skills, nextCursor } = parseClawHubSkills(raw);
+      results.push(...skills);
+      cursor = nextCursor;
+      pagesFetched++;
+    } while (cursor && pagesFetched < 3); // 最多抓3页
+  } catch (e) { console.warn('ClawHub fetch failed:', e.message); }
+
+  // ClawHub search API
+  try {
+    const raw = await fetchUrl('https://clawhub.com/api/search?q=skill&limit=20');
+    const data = JSON.parse(raw);
+    const items = data.results || [];
+    for (const item of items) {
+      if (!results.find(s => s.id === `clawhub:${item.slug}`)) {
+        results.push({
+          id: `clawhub:${item.slug}`,
+          name: item.displayName || item.slug,
+          description: item.summary || '',
+          version: item.version || '1.0.0',
+          author: 'ClawHub Community',
+          source: 'ClawHub',
+          sourceUrl: `https://clawhub.com/skills/${item.slug}`,
+          downloadUrl: `https://clawhub.com/api/v1/skills/${item.slug}/download`,
+          category: inferCategory(null, item.summary),
+          tags: [],
+          platforms: ['openclaw', 'qclaw'],
+          installed: false
+        });
+      }
+    }
+  } catch (e) { console.warn('ClawHub search failed:', e.message); }
+
+  // GitHub Topics
+  try {
+    const raw = await fetchUrl(
+      'https://api.github.com/search/repositories?q=openclaw+skill+language:json&sort=stars&per_page=20',
+      15000
+    );
+    const { skills: ghSkills } = parseGitHubSkills(raw);
+    results.push(...ghSkills);
+  } catch (e) { console.warn('GitHub fetch failed:', e.message); }
+
+  // npm registry
+  try {
+    const raw = await fetchUrl('https://registry.npmjs.org/-/v1/search?text=openclaw+skill&size=20', 10000);
+    const data = JSON.parse(raw);
+    const objects = data.objects || [];
+    for (const obj of objects) {
+      const pkg = obj.package;
+      results.push({
+        id: `npm:${pkg.name}`,
+        name: pkg.name,
+        description: pkg.description || '',
+        version: pkg.version,
+        author: (pkg.maintainers && pkg.maintainers[0]?.username) || 'npm',
+        source: 'npm',
+        sourceUrl: pkg.links?.homepage || pkg.links?.repository || `https://npmjs.com/package/${pkg.name}`,
+        downloadUrl: `https://registry.npmjs.org/${pkg.name}/-/${pkg.name}-${pkg.version}.tgz`,
+        category: inferCategory(pkg.keywords, pkg.description),
+        tags: (pkg.keywords || []).slice(0, 5),
+        platforms: ['openclaw', 'qclaw'],
+        installed: false
+      });
+    }
+  } catch (e) { console.warn('npm fetch failed:', e.message); }
+
+  return results;
+}
+
+// 下载并安装技能（到指定平台）
+async function installMarketplaceSkill(skill, targetPlatform) {
+  const platform = db.getPlatform(targetPlatform);
+  if (!platform) return { success: false, error: `Platform ${targetPlatform} not found` };
+  
+  try {
+    let downloadUrl = skill.downloadUrl;
+    
+    // GitHub raw content
+    if (skill.source === 'GitHub' && skill.sourceUrl) {
+      const repo = skill.sourceUrl.replace('https://github.com/', '');
+      downloadUrl = `https://github.com/${repo}/archive/refs/heads/main.zip`;
+    }
+    
+    // 构建目标路径
+    const skillDirName = skill.name.replace(/[^a-zA-Z0-9_-]/g, '_');
+    const targetDir = path.join(platform.skillsPath, skillDirName);
+    
+    if (!downloadUrl) {
+      // 无下载链接：复制 SKILL.md 描述作为占位符
+      await fs.ensureDir(targetDir);
+      await fs.writeFile(path.join(targetDir, 'SKILL.md'), 
+        `# ${skill.name}\n\n${skill.description}\n\nSource: ${skill.sourceUrl || skill.source}\nVersion: ${skill.version}\n`);
+      return { success: true, path: targetDir, note: 'bookmark_only' };
+    }
+    
+    // 下载 zip
+    const tempZip = path.join(app.getPath('temp'), `openskill-temp-${Date.now()}.zip`);
+    const zipData = await fetchUrl(downloadUrl, 30000);
+    await fs.writeFile(tempZip, zipData);
+    
+    // 解压
+    const AdmZip = require('adm-zip');
+    const zip = new AdmZip(tempZip);
+    zip.extractAllTo(targetDir, true);
+    
+    // 清理
+    await fs.remove(tempZip);
+    
+    // 注册到数据库
+    const installedSkill = {
+      id: `${targetPlatform}:${skillDirName}`,
+      name: skill.name,
+      platform: targetPlatform,
+      path: targetDir,
+      description: skill.description,
+      version: skill.version,
+      author: skill.author,
+      source: skill.source,
+      sourceUrl: skill.sourceUrl,
+      type: 'skill',
+      enabled: true,
+      discoveredAt: new Date().toISOString(),
+      marketplaceId: skill.id,
+      marketplaceSource: skill.source
+    };
+    db.addSkill(installedSkill);
+    await db.save();
+    
+    return { success: true, path: targetDir };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+}
 
 // 技能目录模式
 const SKILL_DIR_PATTERNS = [
@@ -746,6 +1114,53 @@ app.whenReady().then(async () => {
     });
     if (!result.canceled && result.filePaths.length > 0) return result.filePaths[0];
     return null;
+  });
+
+  // ===== 技能广场 IPC =====
+  ipcMain.handle('get-marketplace-sources', async () => SKILL_SOURCES);
+
+  ipcMain.handle('get-marketplace-skills', async () => {
+    try {
+      return await fetchMarketplaceSkills();
+    } catch (error) {
+      console.error('Marketplace fetch failed:', error);
+      return [];
+    }
+  });
+
+  ipcMain.handle('install-marketplace-skill', async (event, skill, targetPlatform) => {
+    return await installMarketplaceSkill(skill, targetPlatform);
+  });
+
+  ipcMain.handle('search-marketplace', async (event, query, sourceId) => {
+    try {
+      const source = SKILL_SOURCES.find(s => s.id === sourceId);
+      if (!source?.searchUrl) return [];
+      
+      if (sourceId === 'clawhub') {
+        const raw = await fetchUrl(`https://clawhub.com/api/search?q=${encodeURIComponent(query)}&limit=20`);
+        const data = JSON.parse(raw);
+        return (data.results || []).map(item => ({
+          id: `clawhub:${item.slug}`,
+          name: item.displayName || item.slug,
+          description: item.summary || '',
+          version: item.version || '1.0.0',
+          author: 'ClawHub Community',
+          source: 'ClawHub',
+          sourceUrl: `https://clawhub.com/skills/${item.slug}`,
+          downloadUrl: `https://clawhub.com/api/v1/skills/${item.slug}/download`,
+          category: inferCategory(null, item.summary),
+          tags: [],
+          platforms: ['openclaw', 'qclaw'],
+          installed: false
+        }));
+      }
+      
+      return [];
+    } catch (error) {
+      console.error('Search failed:', error);
+      return [];
+    }
   });
 });
 
