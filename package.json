@@ -1,6 +1,6 @@
 {
   "name": "openskill-manager",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "跨平台 AI 技能管理工具 - 统一管理 OpenClaw、QClaw 等平台的技能",
   "main": "dist/electron/main.js",
   "scripts": {
@@ -59,11 +59,12 @@
     "appId": "com.openskill.manager",
     "productName": "OpenSkill Manager",
     "publish": [
-    {
-      "provider": "github",
-      "owner": "boboloveic",
-      "repo": "openskill-manager"
-    }],
+      {
+        "provider": "github",
+        "owner": "boboloveic",
+        "repo": "openskill-manager"
+      }
+    ],
     "directories": {
       "output": "dist"
     },
