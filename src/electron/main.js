@@ -9,9 +9,9 @@ let tray;
 let skillWatcher;
 let db;
 
-// 截图模式: --screenshot <output-path>
+// 截图模式: 解析参数（路径在 app.whenReady 里再确定，见下方）
 const screenshotArg = process.argv.find(a => a.startsWith('--screenshot='));
-const screenshotPath = screenshotArg ? screenshotArg.split('=').slice(1).join('=') : null;
+let screenshotPath = null;
 
 // 预定义的 AI 工具平台
 const KNOWN_PLATFORMS = [
@@ -852,10 +852,17 @@ function createWindow() {
     show: false
   });
 
+  let targetUrl;
   if (app.isPackaged) {
-    mainWindow.loadFile(path.join(__dirname, '../react/index.html'));
+    targetUrl = path.join(__dirname, '../react/index.html');
   } else {
-    mainWindow.loadURL('http://localhost:3000');
+    targetUrl = 'http://localhost:3000';
+  }
+  mainWindow.loadFile(targetUrl);
+
+  // 截图路径：在确定 isPackaged 后才能正确解析
+  if (screenshotArg) {
+    screenshotPath = screenshotArg.split('=').slice(1).join('=');
   }
 
   mainWindow.once('ready-to-show', () => {

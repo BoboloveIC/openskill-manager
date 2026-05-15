@@ -213,10 +213,14 @@ const Marketplace: React.FC<Props> = ({ onInstallSuccess }) => {
     <div className="marketplace">
       {/* 统计栏 */}
       <div className="marketplace-stats">
-        <span className="stat-chip">{stats.total} {t('marketplaceSkills') || '个技能'}</span>
-        <span className="stat-chip">{stats.sources} {t('marketplaceSources') || '个来源'}</span>
+        <span className="stat-chip">{stats.total}&thinsp;{t('marketplaceSkills') || '个技能'}</span>
+        <span className="stat-sep">·</span>
+        <span className="stat-chip">{stats.sources}&thinsp;{t('marketplaceSources') || '个来源'}</span>
         {stats.installed > 0 && (
-          <span className="stat-chip installed-chip">✅ {stats.installed} {t('marketplaceInstalled') || '已安装'}</span>
+          <>
+            <span className="stat-sep">·</span>
+            <span className="stat-chip installed-chip">{stats.installed}&thinsp;{t('marketplaceInstalled') || '已安装'}</span>
+          </>
         )}
       </div>
 
