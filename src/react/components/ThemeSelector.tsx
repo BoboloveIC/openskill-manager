@@ -3,16 +3,18 @@
 // ============================================================
 import React, { useState, useRef, useEffect } from 'react';
 import { useTheme, Theme } from '../context/ThemeContext';
-
-const THEME_OPTIONS: { value: Theme; label: string; icon: string }[] = [
-  { value: 'light', label: '浅色', icon: '☀️' },
-  { value: 'dark', label: '深色', icon: '🌙' },
-];
+import { useLanguage } from '../i18n';
 
 export const ThemeSelector: React.FC = () => {
   const { theme, setTheme } = useTheme();
+  const { t } = useLanguage();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+
+  const THEME_OPTIONS: { value: Theme; label: string; icon: string }[] = [
+    { value: 'light', label: t('themeLight'), icon: '☀️' },
+    { value: 'dark', label: t('themeDark'), icon: '🌙' },
+  ];
 
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
@@ -29,7 +31,6 @@ export const ThemeSelector: React.FC = () => {
       <button
         className="language-btn theme-btn"
         onClick={() => setOpen(!open)}
-        title="切换主题"
         style={{
           display: 'flex',
           alignItems: 'center',
@@ -81,10 +82,10 @@ export const ThemeSelector: React.FC = () => {
                 transition: 'background 0.15s',
               }}
               onMouseEnter={(e) => {
-                if (option.value !== theme) (e.target as HTMLElement).style.background = 'var(--hover-bg)';
+                if (option.value !== theme) (e.currentTarget as HTMLElement).style.background = 'var(--hover-bg)';
               }}
               onMouseLeave={(e) => {
-                if (option.value !== theme) (e.target as HTMLElement).style.background = 'transparent';
+                if (option.value !== theme) (e.currentTarget as HTMLElement).style.background = 'transparent';
               }}
             >
               <span style={{ fontSize: 16 }}>{option.icon}</span>

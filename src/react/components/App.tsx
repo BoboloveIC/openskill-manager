@@ -356,6 +356,9 @@ const App: React.FC = () => {
 
   // 从 zip 文件导入
   const [showImportModal, setShowImportModal] = useState(false);
+  const [showOverflowMenu, setShowOverflowMenu] = useState(false);
+  const overflowTriggerRef = useRef<HTMLButtonElement>(null);
+  const overflowDropdownRef = useRef<HTMLDivElement>(null);
   const handleImportFromFile = async (filePath: string, targetPlatform: string) => {
     try {
       const result = await (window as any).electronAPI.importSkillsFromFile(filePath, targetPlatform);
@@ -375,6 +378,21 @@ const App: React.FC = () => {
   const handleOpenInFinder = async (filePath: string) => {
     await (window as any).electronAPI.openInFinder(filePath);
   };
+
+  // 点击溢出菜单外部关闭
+  useEffect(() => {
+    if (!showOverflowMenu) return;
+    const handleClick = (e: MouseEvent) => {
+      if (
+        overflowTriggerRef.current && !overflowTriggerRef.current.contains(e.target as Node) &&
+        overflowDropdownRef.current && !overflowDropdownRef.current.contains(e.target as Node)
+      ) {
+        setShowOverflowMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [showOverflowMenu]);
 
   // ===================== 渲染 =====================
 
@@ -577,8 +595,6 @@ const App: React.FC = () => {
             </div>
           </div>
           <div className="header-right">
-            <ThemeSelector />
-            <LanguageSelector />
             <input
               type="text"
               className="search-input"
@@ -586,19 +602,53 @@ const App: React.FC = () => {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
-            <button className="scan-btn" onClick={scanAll} disabled={scanning}>
-              {scanning ? t('scanningBtn') : t('scanSkillsBtn')}
-            </button>
-            <button className="action-btn secondary" onClick={() => setShowImportModal(true)}>
-              📥 {t('importFromFile')}
-            </button>
-            <button className="action-btn secondary" onClick={() => setShowAddModal(true)}>
-              📂 {t('importFromDir')}
-            </button>
+            <div className="header-actions">
+              <ThemeSelector />
+              <LanguageSelector />
+              <button className="scan-btn" onClick={scanAll} disabled={scanning}>
+                {scanning ? t('scanningBtn') : t('scanSkillsBtn')}
+              </button>
+              <button className="action-btn secondary" onClick={() => setShowImportModal(true)}>
+                📥 {t('importFromFile')}
+              </button>
+              <button className="action-btn secondary" onClick={() => setShowAddModal(true)}>
+                📂 {t('importFromDir')}
+              </button>
+            </div>
+            <div className="header-overflow-menu">
+              <button
+                className="overflow-trigger"
+                onClick={() => setShowOverflowMenu(v => !v)}
+                ref={overflowTriggerRef}
+              >
+                ☰
+              </button>
+              {showOverflowMenu && (
+                <div className="overflow-dropdown" ref={overflowDropdownRef}>
+                  <div className="overflow-section">
+                    <ThemeSelector />
+                    <LanguageSelector />
+                  </div>
+                  <div className="overflow-divider" />
+                  <button className="overflow-item" onClick={() => { scanAll(); setShowOverflowMenu(false); }} disabled={scanning}>
+                    🔄 {scanning ? t('scanningBtn') : t('scanSkillsBtn')}
+                  </button>
+                  <button className="overflow-item" onClick={() => { setShowImportModal(true); setShowOverflowMenu(false); }}>
+                    📥 {t('importFromFile')}
+                  </button>
+                  <button className="overflow-item" onClick={() => { setShowAddModal(true); setShowOverflowMenu(false); }}>
+                    📂 {t('importFromDir')}
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </header>
 
         <div className="content-area">
+          {activeTab === 'marketplace' ? (
+            <Marketplace />
+          ) : (
           <div className="content-grid">
             <div className="skill-section">
               <div className="section-header">
@@ -658,6 +708,7 @@ const App: React.FC = () => {
               )}
             </div>
           </div>
+          )}
         </div>
       </div>
 
