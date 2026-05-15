@@ -6,6 +6,12 @@ A cross-platform desktop app to discover, manage, migrate, and package AI skills
   <strong>Built with Electron + React + TypeScript</strong>
 </p>
 
+<!-- SCREENSHOT START -->
+<p align="center">
+  <img src="docs/screenshot.png" alt="OpenSkill Manager Screenshot" width="800" />
+</p>
+<!-- SCREENSHOT END -->
+
 ---
 
 ## ✨ Features
