@@ -1,6 +1,6 @@
 # OpenSkill Manager
 
-A cross-platform desktop app to discover, manage, migrate, and package AI skills/plugins/extensions across 35+ AI tool platforms — all from a single interface.
+A unified desktop dashboard designed for OpenClaw and 35+ other AI tool platforms to discover, manage, migrate, and package skills, plugins, and extensions seamlessly across frameworks.
 
 <p align="center">
   <strong>Built with Electron + React + TypeScript</strong>
