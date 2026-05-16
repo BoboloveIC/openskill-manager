@@ -326,8 +326,35 @@ async function fetchMarketplaceSkills() {
 
 // 下载并安装技能（到指定平台）
 async function installMarketplaceSkill(skill, targetPlatform) {
-  const platform = db.getPlatform(targetPlatform);
-  if (!platform) return { success: false, error: `Platform ${targetPlatform} not found` };
+  console.log(`[Install] Starting: ${skill.name} → ${targetPlatform}`);
+  
+  // 1. 查找目标平台（支持模糊匹配）
+  let platform = db.getPlatform(targetPlatform);
+  if (!platform) {
+    // 尝试不区分大小写匹配
+    const allPlatforms = db.getPlatforms();
+    platform = allPlatforms.find(p => p.name.toLowerCase() === targetPlatform.toLowerCase());
+  }
+  if (!platform) {
+    // 如果数据库里没有平台信息，尝试直接从文件系统推断
+    const homeDir = app.getPath('home');
+    const possiblePaths = [
+      path.join(homeDir, `.${targetPlatform}`, 'skills'),
+      path.join(homeDir, targetPlatform, 'skills'),
+      path.join(homeDir, `.${targetPlatform}`, '.openclaw', 'skills'),
+      path.join(homeDir, `.${targetPlatform}`),
+    ];
+    for (const pp of possiblePaths) {
+      if (await fs.pathExists(pp)) {
+        platform = { name: targetPlatform, skillsPath: pp, path: path.dirname(pp) };
+        console.log(`[Install] Found platform via filesystem: ${pp}`);
+        break;
+      }
+    }
+  }
+  if (!platform) {
+    return { success: false, error: `Platform "${targetPlatform}" not found. Please run Scan Skills first.` };
+  }
   
   try {
     let downloadUrl = skill.downloadUrl;
@@ -339,54 +366,107 @@ async function installMarketplaceSkill(skill, targetPlatform) {
     }
     
     // 构建目标路径
-    const skillDirName = skill.name.replace(/[^a-zA-Z0-9_-]/g, '_');
+    const skillDirName = skill.name.replace(/[^a-zA-Z0-9_\u4e00-\u9fa5_-]/g, '_');
     const targetDir = path.join(platform.skillsPath, skillDirName);
     
+    console.log(`[Install] Target dir: ${targetDir}, downloadUrl: ${downloadUrl || '(none)'}`);
+    
     if (!downloadUrl) {
-      // 无下载链接：复制 SKILL.md 描述作为占位符
+      // 无下载链接：创建 SKILL.md 占位符
       await fs.ensureDir(targetDir);
       await fs.writeFile(path.join(targetDir, 'SKILL.md'), 
-        `# ${skill.name}\n\n${skill.description}\n\nSource: ${skill.sourceUrl || skill.source}\nVersion: ${skill.version}\n`);
+        `# ${skill.name}\n\n${skill.description}\n\nSource: ${skill.sourceUrl || skill.source}\nVersion: ${skill.version}\nInstalled from: Marketplace (${skill.source})\n`);
+      
+      // 注册到数据库
+      registerInstalledSkill(skill, targetPlatform, skillDirName, targetDir, 'bookmark_only');
       return { success: true, path: targetDir, note: 'bookmark_only' };
     }
     
-    // 下载 zip
+    // 下载 zip（带重试和更好的错误处理）
     const tempZip = path.join(app.getPath('temp'), `openskill-temp-${Date.now()}.zip`);
-    const zipData = await fetchUrl(downloadUrl, 30000);
-    await fs.writeFile(tempZip, zipData);
+    try {
+      const zipData = await fetchUrl(downloadUrl, 30000);
+      if (!zipData || zipData.length < 10) {
+        throw new Error(`Download returned empty response (${zipData ? zipData.length : 0} bytes)`);
+      }
+      await fs.writeFile(tempZip, zipData);
+      console.log(`[Install] Downloaded ${zipData.length} bytes to ${tempZip}`);
+    } catch (dlErr) {
+      console.error(`[Install] Download failed for ${downloadUrl}:`, dlErr.message);
+      // 降级：创建占位符
+      await fs.ensureDir(targetDir);
+      await fs.writeFile(path.join(targetDir, 'SKILL.md'), 
+        `# ${skill.name}\n\n${skill.description}\n\nSource: ${skill.sourceUrl || downloadUrl}\nVersion: ${skill.version}\n> ⚠️ Download failed: ${dlErr.message}\n`);
+      registerInstalledSkill(skill, targetPlatform, skillDirName, targetDir, 'download_failed');
+      return { success: true, path: targetDir, note: 'download_failed', warning: dlErr.message };
+    }
     
     // 解压
-    const AdmZip = require('adm-zip');
-    const zip = new AdmZip(tempZip);
-    zip.extractAllTo(targetDir, true);
+    try {
+      const AdmZip = require('adm-zip');
+      const zip = new AdmZip(tempZip);
+      const entries = zip.getEntries();
+      
+      // 检查是否只有一个根目录（常见于 GitHub archive zip）
+      const rootDirs = entries.filter(e => e.entryName && !e.entryName.includes('/') && !e.isDirectory).length === 0
+        ? [...new Set(entries.map(e => e.entryName.split('/')[0]).filter(Boolean))]
+        : [];
+      
+      if (rootDirs.length === 1) {
+        // 单根目录：解压到临时目录再移动内容
+        const tempExtract = path.join(app.getPath('temp'), `openskill-extract-${Date.now()}`);
+        zip.extractAllTo(tempExtract, true);
+        const innerDir = path.join(tempExtract, rootDirs[0]);
+        if (await fs.pathExists(innerDir)) {
+          await fs.copy(innerDir, targetDir);
+          await fs.remove(tempExtract);
+        } else {
+          zip.extractAllTo(targetDir, true);
+        }
+      } else {
+        zip.extractAllTo(targetDir, true);
+      }
+      console.log(`[Install] Extracted to ${targetDir}`);
+    } catch (extractErr) {
+      console.error('[Install] Extract failed:', extractErr.message);
+      throw extractErr;
+    }
     
-    // 清理
-    await fs.remove(tempZip);
+    // 清理临时文件
+    try { await fs.remove(tempZip); } catch (_) {}
     
     // 注册到数据库
-    const installedSkill = {
-      id: `${targetPlatform}:${skillDirName}`,
-      name: skill.name,
-      platform: targetPlatform,
-      path: targetDir,
-      description: skill.description,
-      version: skill.version,
-      author: skill.author,
-      source: skill.source,
-      sourceUrl: skill.sourceUrl,
-      type: 'skill',
-      enabled: true,
-      discoveredAt: new Date().toISOString(),
-      marketplaceId: skill.id,
-      marketplaceSource: skill.source
-    };
-    db.addSkill(installedSkill);
-    await db.save();
+    registerInstalledSkill(skill, targetPlatform, skillDirName, targetDir, 'installed');
     
     return { success: true, path: targetDir };
   } catch (error) {
+    console.error(`[Install] Failed for ${skill.name}:`, error);
     return { success: false, error: error.message };
   }
+}
+
+// 注册已安装技能到数据库
+function registerInstalledSkill(skill, targetPlatform, skillDirName, targetDir, method) {
+  const installedSkill = {
+    id: `${targetPlatform}:${skillDirName}`,
+    name: skill.name,
+    platform: targetPlatform,
+    path: targetDir,
+    description: skill.description,
+    version: skill.version,
+    author: skill.author,
+    source: skill.source,
+    sourceUrl: skill.sourceUrl,
+    type: 'skill',
+    enabled: true,
+    discoveredAt: new Date().toISOString(),
+    marketplaceId: skill.id,
+    marketplaceSource: skill.source,
+    installMethod: method
+  };
+  db.addSkill(installedSkill);
+  db.save();
+  console.log(`[Install] Registered: ${installedSkill.id} (method=${method})`);
 }
 
 // 技能目录模式

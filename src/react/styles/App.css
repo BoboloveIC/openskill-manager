@@ -934,20 +934,152 @@ body {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.7);
+  background: rgba(0, 0, 0, 0.65);
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 1000;
-  backdrop-filter: blur(4px);
+  z-index: 10000;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  animation: modalFadeIn 0.2s ease-out;
 }
 
+@keyframes modalFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes modalSlideIn {
+  from { 
+    opacity: 0;
+    transform: translateY(-20px) scale(0.96);
+  }
+  to { 
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.modal-box {
+  background: var(--bg-card, #ffffff);
+  border-radius: 16px;
+  width: 90%;
+  max-width: 420px;
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.08),
+    0 25px 50px -12px rgba(0, 0, 0, 0.5),
+    0 12px 24px -8px rgba(0, 0, 0, 0.3);
+  padding: 28px 32px;
+  position: relative;
+  z-index: 10001;
+  animation: modalSlideIn 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.modal-box h3 {
+  margin: 0 0 6px 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary, #1a1a2e);
+  letter-spacing: -0.01em;
+}
+
+.modal-box p {
+  margin: 0 0 18px 0;
+  font-size: 14px;
+  color: var(--text-secondary, #666);
+  line-height: 1.5;
+}
+
+.modal-box label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary, #333);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  opacity: 0.7;
+}
+
+.modal-box select {
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1.5px solid var(--border-color, #e0e0e0);
+  background: var(--bg-medium, #f8f9fa);
+  color: var(--text-primary, #1a1a2e);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23666' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  padding-right: 36px;
+}
+
+.modal-box select:hover {
+  border-color: var(--primary-color, #5865f2);
+}
+
+.modal-box select:focus {
+  outline: none;
+  border-color: var(--primary-color, #5865f2);
+  box-shadow: 0 0 0 3px rgba(88, 101, 242, 0.15);
+}
+
+.modal-box .modal-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 22px;
+}
+
+.modal-box .modal-actions button {
+  padding: 10px 22px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  border: none;
+}
+
+.modal-box .modal-actions button:first-child {
+  background: transparent;
+  color: var(--text-secondary, #666);
+  border: 1.5px solid var(--border-color, #e0e0e0);
+}
+
+.modal-box .modal-actions button:first-child:hover {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: #bbb;
+}
+
+.modal-box .modal-actions button:last-child {
+  background: linear-gradient(135deg, #5865f2, #7c3aed);
+  color: white;
+  box-shadow: 0 4px 12px rgba(88, 101, 242, 0.35);
+}
+
+.modal-box .modal-actions button:last-child:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(88, 101, 242, 0.45);
+}
+
+.modal-box .modal-actions button:last-child:active {
+  transform: translateY(0);
+}
+
+/* Legacy .modal class (for MigrateModal/ImportModal) */
 .modal {
   background: var(--bg-medium);
   border-radius: 16px;
   width: 90%;
   max-width: 500px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.45);
   overflow: hidden;
 }
 

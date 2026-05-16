@@ -38,35 +38,54 @@ const InstallDialog: React.FC<{
   skill: MarketplaceSkill,
   platforms: string[],
   onConfirm: (targetPlatform: string) => void,
-  onCancel: () => void
-}> = ({ skill, platforms, onConfirm, onCancel }) => {
+  onCancel: () => void,
+  installing?: boolean,
+  result?: { success: boolean; message: string } | null
+}> = ({ skill, platforms, onConfirm, onCancel, installing, result }) => {
   const { t } = useLanguage();
   const [selected, setSelected] = useState(platforms[0] || '');
   return (
     <div className="modal-overlay">
-      <div className="modal-box" style={{ maxWidth: 400 }}>
-        <h3>{t('marketplaceInstallTitle') || '安装到平台'}</h3>
-        <p style={{ color: '#666', marginBottom: 16 }}>
-          {skill.name} <small>v{skill.version}</small>
-        </p>
-        <label style={{ fontWeight: 600, marginBottom: 8, display: 'block' }}>
-          {t('marketplaceSelectPlatform') || '选择目标平台'}
-        </label>
-        <select
-          value={selected}
-          onChange={e => setSelected(e.target.value)}
-          style={{ width: '100%', padding: '8px 12px', borderRadius: 6, border: '1px solid #ccc', fontSize: 14, marginBottom: 16 }}
-        >
-          {platforms.map(p => (
-            <option key={p} value={p}>{p}</option>
-          ))}
-        </select>
-        <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-          <button className="action-btn" onClick={onCancel}>{t('cancel') || '取消'}</button>
-          <button className="action-btn primary" onClick={() => onConfirm(selected)}>
-            {t('marketplaceInstall') || '安装'}
-          </button>
-        </div>
+      <div className="modal-box">
+        {installing ? (
+          <>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
+              <div className="marketplace-spinner" style={{ width: 28, height: 28, borderWidth: 3 }} />
+              <h3>{t('marketplaceInstalling') || 'Installing...'}</h3>
+            </div>
+            <p style={{ color: '#888', fontSize: 13 }}>{skill.name} → {selected}</p>
+          </>
+        ) : result ? (
+          <>
+            <h3 style={{ color: result.success ? '#16a34a' : '#dc2626' }}>
+              {result.success ? '✅' : '❌'} {result.message}
+            </h3>
+            <p style={{ color: '#888', fontSize: 13 }}>{skill.name}</p>
+            <div className="modal-actions">
+              <button onClick={onCancel}>{t('close') || 'Close'}</button>
+            </div>
+          </>
+        ) : (
+          <>
+            <h3>{t('marketplaceInstallTitle') || 'Install to Platform'}</h3>
+            <p>{skill.name} <small style={{ opacity: 0.6 }}>v{skill.version}</small></p>
+            <label>{t('marketplaceSelectPlatform') || 'Select Target Platform'}</label>
+            <select
+              value={selected}
+              onChange={e => setSelected(e.target.value)}
+            >
+              {platforms.map(p => (
+                <option key={p} value={p}>{p}</option>
+              ))}
+            </select>
+            <div className="modal-actions">
+              <button onClick={onCancel}>{t('cancel') || 'Cancel'}</button>
+              <button onClick={() => onConfirm(selected)}>
+                {t('marketplaceInstall') || 'Install'}
+              </button>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
@@ -193,19 +212,19 @@ const Marketplace: React.FC<Props> = ({ onInstallSuccess }) => {
       const result = await (window as any).electronAPI.installMarketplaceSkill(installTarget, targetPlatform);
       if (result.success) {
         setSkills(prev => prev.map(s => s.id === installTarget.id ? { ...s, installed: true } : s));
-        setInstallResult({ success: true, message: t('marketplaceInstallSuccess') || '安装成功！' });
+        setInstallResult({ success: true, message: result.note 
+          ? (t('marketplaceInstallSuccess') || 'Installed!') + ` (${result.note})`
+          : (t('marketplaceInstallSuccess') || 'Installed successfully!')
+        });
         onInstallSuccess?.(installTarget, targetPlatform);
       } else {
-        setInstallResult({ success: false, message: result.error || '安装失败' });
+        setInstallResult({ success: false, message: result.error || 'Installation failed' });
       }
     } catch (e: any) {
-      setInstallResult({ success: false, message: e.message || '安装失败' });
+      setInstallResult({ success: false, message: e.message || 'Installation failed' });
     } finally {
       setInstalling(null);
-      setTimeout(() => {
-        setInstallTarget(null);
-        setInstallResult(null);
-      }, 2000);
+      // 不自动关闭弹窗，让用户看到结果并手动关闭
     }
   }, [installTarget, onInstallSuccess, t]);
 
@@ -332,6 +351,8 @@ const Marketplace: React.FC<Props> = ({ onInstallSuccess }) => {
           platforms={['openclaw', 'qclaw', 'claude', 'cursor', 'vscode', 'trae', 'skillhub', 'zen', 'zencoder', 'zagent']}
           onConfirm={confirmInstall}
           onCancel={() => { setInstallTarget(null); setInstallResult(null); }}
+          installing={!!installing && installing === installTarget.id}
+          result={installResult}
         />
       )}
 
