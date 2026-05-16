@@ -606,13 +606,13 @@ const App: React.FC = () => {
               <ThemeSelector />
               <LanguageSelector />
               <button className="scan-btn" onClick={scanAll} disabled={scanning}>
-                {scanning ? t('scanningBtn') : t('scanSkillsBtn')}
+                <span>{scanning ? t('scanningBtn') : t('scanSkillsBtn')}</span>
               </button>
               <button className="action-btn secondary" onClick={() => setShowImportModal(true)}>
-                📥 {t('importFromFile')}
+                📥 <span>{t('importFromFile')}</span>
               </button>
               <button className="action-btn secondary" onClick={() => setShowAddModal(true)}>
-                📂 {t('importFromDir')}
+                📂 <span>{t('importFromDir')}</span>
               </button>
             </div>
             <div className="header-overflow-menu">

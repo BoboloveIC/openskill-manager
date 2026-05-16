@@ -206,7 +206,24 @@ body {
 .header-actions {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+/* 按钮在空间不足时允许收缩 */
+.header-actions .action-btn,
+.header-actions .scan-btn,
+.header-actions > *:not(.overflow-menu-item) {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 140px;
+}
+
+.header-actions .action-btn {
+  padding: 8px 12px;
+  font-size: 12px;
 }
 
 /* 溢出菜单 - 默认隐藏 */
@@ -285,7 +302,9 @@ body {
   cursor: not-allowed;
 }
 
-/* 响应式: 窄窗口时隐藏操作栏，显示溢出菜单 */
+/* 响应式: 多级断点 */
+
+/* <=960px: 全部收进溢出菜单 */
 @media (max-width: 960px) {
   .header-actions {
     display: none !important;
@@ -298,9 +317,31 @@ body {
     width: auto;
     flex: 1;
   }
+  .type-tabs {
+    display: none !important;
+  }
 }
 
-@media (min-width: 961px) {
+/* 961-1400px: 只显示图标，文本收进菜单 */
+@media (min-width: 961px) and (max-width: 1400px) {
+  .header-actions {
+    display: flex !important;
+  }
+  .header-actions .action-btn {
+    padding: 6px 10px;
+    font-size: 11px;
+  }
+  .header-actions .action-btn span {
+    display: none;
+  }
+  .header-actions .scan-btn {
+    padding: 6px 10px;
+    font-size: 11px;
+  }
+}
+
+/* >1400px: 完整显示 */
+@media (min-width: 1401px) {
   .header-overflow-menu {
     display: none !important;
   }
