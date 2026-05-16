@@ -81,6 +81,28 @@
       ],
       "identity": null
     },
+    "dmg": {
+      "background": "assets/dmg-background.png",
+      "contents": [
+        {
+          "x": 170,
+          "y": 280,
+          "type": "file"
+        },
+        {
+          "x": 530,
+          "y": 280,
+          "type": "link",
+          "path": "/Applications"
+        }
+      ],
+      "window": {
+        "x": 200,
+        "y": 120,
+        "width": 600,
+        "height": 380
+      }
+    },
     "win": {
       "target": [
         "nsis",
